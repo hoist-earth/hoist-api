@@ -61,10 +61,7 @@ app.get('/user/manifestStripeCustomer', jwtCheck, function (req, res) {
 
       request(options, function (error, response, body) {
         if (error) throw new Error(error);
-      });
-
-      res.json({
-        response: "Done"
+        res.json(body)
       });
 
     })
