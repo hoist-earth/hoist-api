@@ -174,4 +174,10 @@ app.get("/user/manifestStripeCustomer", jwtCheck, function (req, res) {
     })
 })
 
+app.get("/", function (req, res) {
+  res.json({
+    commit_ref: process.env.VERCEL_GITHUB_COMMIT_REF,
+  })
+})
+
 app.listen(port)
