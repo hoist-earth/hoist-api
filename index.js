@@ -22,10 +22,10 @@ var jwtCheck = jwt({
     cache: true,
     rateLimit: true,
     jwksRequestsPerMinute: 5,
-    jwksUri: "https://" + process.env.AUTH0_DOMAIN + "/.well-known/jwks.json",
+    jwksUri: `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`,
   }),
-  audience: "http://localhost:3000",
-  issuer: "https://" + process.env.AUTH0_DOMAIN + "/",
+  audience: process.env.HOIST_API_AUDIENCE,
+  issuer: `https://${process.env.AUTH0_DOMAIN}/`,
   algorithms: ["RS256"],
 })
 
@@ -35,16 +35,14 @@ const getManagementApiJwt = () => {
   return new Promise(function (resolve, reject) {
     var options = {
       method: "POST",
-      url: "https://" + process.env.AUTH0_DOMAIN + "/oauth/token",
+      url: `https://${process.env.AUTH0_DOMAIN}/oauth/token`,
       headers: { "content-type": "application/json" },
-      body:
-        '{"client_id":"' +
-        process.env.AUTH0_CLIENT_ID +
-        '","client_secret":"' +
-        process.env.AUTH0_CLIENT_SECRET +
-        '","audience":"https://' +
-        process.env.AUTH0_DOMAIN +
-        '/api/v2/","grant_type":"client_credentials"}',
+      body: JSON.stringify({
+        client_id: process.env.AUTH0_CLIENT_ID,
+        client_secret: process.env.AUTH0_CLIENT_SECRET,
+        audience: `https://${process.env.AUTH0_DOMAIN}/api/v2/`,
+        grant_type: "client_credentials",
+      }),
     }
 
     request(options, function (err, resp, body) {
@@ -63,15 +61,14 @@ app.post("/checkout/create", jwtCheck, function (req, res) {
     console.log(token)
     var options = {
       method: "GET",
-      url: "https://" + process.env.AUTH0_DOMAIN + "/api/v2/users/" + req.user.sub,
-      headers: { authorization: "Bearer " + token, "content-type": "application/json" },
+      url: `https://${process.env.AUTH0_DOMAIN}/api/v2/users/${req.user.sub}`,
+      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
       json: true,
     }
 
     request(options, async function (error, response, body) {
       if (error) throw new Error(error)
       const customerId = body.app_metadata.stripeCustomerId
-      // console.log([customerId, req.body.stripePricingPlanId])
 
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
@@ -83,22 +80,23 @@ app.post("/checkout/create", jwtCheck, function (req, res) {
         ],
         customer: customerId,
         mode: "subscription",
-        success_url: process.env.HOIST_WEBSITE + "/account",
-        cancel_url: process.env.HOIST_WEBSITE + "/account",
+        success_url: `${process.env.HOIST_WEBSITE}/account`,
+        cancel_url: `${process.env.HOIST_WEBSITE}/account`,
       })
 
       res.json(session)
     })
   })
 })
+
 app.post("/portal/create", jwtCheck, function (req, res) {
   getManagementApiJwt().then(data => {
     const token = data.access_token
     console.log(token)
     var options = {
       method: "GET",
-      url: "https://" + process.env.AUTH0_DOMAIN + "/api/v2/users/" + req.user.sub,
-      headers: { authorization: "Bearer " + token, "content-type": "application/json" },
+      url: `https://${process.env.AUTH0_DOMAIN}/api/v2/users/${req.user.sub}`,
+      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
       json: true,
     }
 
@@ -108,7 +106,7 @@ app.post("/portal/create", jwtCheck, function (req, res) {
 
       const session = await stripe.billingPortal.sessions.create({
         customer: customerId,
-        return_url: process.env.HOIST_WEBSITE + "/account",
+        return_url: `${process.env.HOIST_WEBSITE}/account`,
       })
 
       res.json(session)
@@ -122,8 +120,8 @@ app.get("/user/getSubscriptions", jwtCheck, function (req, res) {
     console.log(token)
     var options = {
       method: "GET",
-      url: "https://" + process.env.AUTH0_DOMAIN + "/api/v2/users/" + req.user.sub,
-      headers: { authorization: "Bearer " + token, "content-type": "application/json" },
+      url: `https://${process.env.AUTH0_DOMAIN}/api/v2/users/${req.user.sub}`,
+      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
       json: true,
     }
 
@@ -156,8 +154,8 @@ app.get("/user/manifestStripeCustomer", jwtCheck, function (req, res) {
       // Save Stripe Customer ID to App Metadata
       var options = {
         method: "PATCH",
-        url: "https://" + process.env.AUTH0_DOMAIN + "/api/v2/users/" + req.user.sub,
-        headers: { authorization: "Bearer " + token, "content-type": "application/json" },
+        url: `https://${process.env.AUTH0_DOMAIN}/api/v2/users/${req.user.sub}`,
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
         body: { app_metadata: { stripeCustomerId: customer.id } },
         json: true,
       }
@@ -172,6 +170,12 @@ app.get("/user/manifestStripeCustomer", jwtCheck, function (req, res) {
         response: "Fail",
       })
     })
+})
+
+app.get("/", function (req, res) {
+  res.json({
+    audience: process.env.HOIST_API_AUDIENCE,
+  })
 })
 
 app.listen(port)
