@@ -174,8 +174,7 @@ app.get("/user/manifestStripeCustomer", jwtCheck, function (req, res) {
 
 app.get("/", function (req, res) {
   res.json({
-    clientid: process.env.AUTH0_CLIENT_ID,
-    domain: process.env.AUTH0_DOMAIN,
+    audience: process.env.HOIST_API_AUDIENCE,
   })
 })
 
