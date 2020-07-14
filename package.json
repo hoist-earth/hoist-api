@@ -1,8 +1,9 @@
 {
   "name": "hoist-api",
-  "version": "1.0.0",
+  "private": true,
   "description": "API for Hoist",
-  "main": "index.js",
+  "version": "1.0.0",
+  "author": "Ben Dechrai <ben@dechrai.com>",
   "dependencies": {
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
@@ -17,6 +18,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC"
+  "main": "index.js",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/hoistearth/api.git"
+  }
 }
