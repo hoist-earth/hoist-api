@@ -1,23 +1,28 @@
-require("dotenv").config()
+import { AuthorizationResponse, AuthenticatedRequest } from "./types"
 
-var express = require("express")
-var app = express()
+import { config } from "dotenv"
+config()
 
-var cors = require("cors")
+import express from "express"
+const app = express()
+
+import cors from "cors"
 app.use(cors())
 
-var bodyParser = require("body-parser")
+import bodyParser from "body-parser"
 app.use(bodyParser.json())
 
-var jwt = require("express-jwt")
-var jwks = require("jwks-rsa")
+import jwt from "express-jwt"
+import jwks from "jwks-rsa"
 
-var stripe = require("stripe")(process.env.STRIPE_SECRET_KEY)
-var request = require("request")
+import { Stripe } from "stripe"
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", { apiVersion: "2020-03-02" })
 
-var port = process.env.PORT || 3000
+import request from "request"
 
-var jwtCheck = jwt({
+const port = process.env.PORT || 3000
+
+const jwtCheck = jwt({
   secret: jwks.expressJwtSecret({
     cache: true,
     rateLimit: true,
@@ -30,10 +35,8 @@ var jwtCheck = jwt({
 })
 
 const getManagementApiJwt = () => {
-  var request = require("request")
-
   return new Promise(function (resolve, reject) {
-    var options = {
+    const options = {
       method: "POST",
       url: `https://${process.env.AUTH0_DOMAIN}/oauth/token`,
       headers: { "content-type": "application/json" },
@@ -56,12 +59,13 @@ const getManagementApiJwt = () => {
 }
 
 app.post("/checkout/create", jwtCheck, function (req, res) {
+  const authenticatedRequest = req as AuthenticatedRequest // XXX: Must be a better way!
   getManagementApiJwt().then(data => {
-    const token = data.access_token
+    const token = (data as AuthorizationResponse).access_token
     console.log(token)
-    var options = {
+    const options = {
       method: "GET",
-      url: `https://${process.env.AUTH0_DOMAIN}/api/v2/users/${req.user.sub}`,
+      url: `https://${process.env.AUTH0_DOMAIN}/api/v2/users/${authenticatedRequest.user.sub}`,
       headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
       json: true,
     }
@@ -90,12 +94,14 @@ app.post("/checkout/create", jwtCheck, function (req, res) {
 })
 
 app.post("/portal/create", jwtCheck, function (req, res) {
+  const authenticatedRequest = req as AuthenticatedRequest // XXX: Must be a better way!
+
   getManagementApiJwt().then(data => {
-    const token = data.access_token
+    const token = (data as AuthorizationResponse).access_token
     console.log(token)
-    var options = {
+    const options = {
       method: "GET",
-      url: `https://${process.env.AUTH0_DOMAIN}/api/v2/users/${req.user.sub}`,
+      url: `https://${process.env.AUTH0_DOMAIN}/api/v2/users/${authenticatedRequest.user.sub}`,
       headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
       json: true,
     }
@@ -115,12 +121,14 @@ app.post("/portal/create", jwtCheck, function (req, res) {
 })
 
 app.get("/user/getSubscriptions", jwtCheck, function (req, res) {
+  const authenticatedRequest = req as AuthenticatedRequest // XXX: Must be a better way!
+
   getManagementApiJwt().then(data => {
-    const token = data.access_token
+    const token = (data as AuthorizationResponse).access_token
     console.log(token)
-    var options = {
+    const options = {
       method: "GET",
-      url: `https://${process.env.AUTH0_DOMAIN}/api/v2/users/${req.user.sub}`,
+      url: `https://${process.env.AUTH0_DOMAIN}/api/v2/users/${authenticatedRequest.user.sub}`,
       headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
       json: true,
     }
@@ -140,21 +148,23 @@ app.get("/user/getSubscriptions", jwtCheck, function (req, res) {
 })
 
 app.get("/user/manifestStripeCustomer", jwtCheck, function (req, res) {
+  const authenticatedRequest = req as AuthenticatedRequest // XXX: Must be a better way!
+
   getManagementApiJwt()
     .then(async data => {
-      const token = data.access_token
+      const token = (data as AuthorizationResponse).access_token
 
       // Create Stripe Customer
       const customer = await stripe.customers.create({
         metadata: {
-          auth0sub: req.user.sub,
+          auth0sub: authenticatedRequest.user.sub,
         },
       })
 
       // Save Stripe Customer ID to App Metadata
-      var options = {
+      const options = {
         method: "PATCH",
-        url: `https://${process.env.AUTH0_DOMAIN}/api/v2/users/${req.user.sub}`,
+        url: `https://${process.env.AUTH0_DOMAIN}/api/v2/users/${authenticatedRequest.user.sub}`,
         headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
         body: { app_metadata: { stripeCustomerId: customer.id } },
         json: true,
@@ -168,6 +178,7 @@ app.get("/user/manifestStripeCustomer", jwtCheck, function (req, res) {
     .catch(e => {
       res.json({
         response: "Fail",
+        error: e,
       })
     })
 })
@@ -178,4 +189,5 @@ app.get("/", function (req, res) {
   })
 })
 
+console.log("App running on port " + port)
 app.listen(port)
