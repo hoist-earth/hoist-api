@@ -1,4 +1,7 @@
 import express from "express"
+
+import { NowRequest, NowResponse } from "@vercel/node"
+
 import cors from "cors"
 import { AuthenticatedRequest } from "./types"
 
@@ -14,7 +17,7 @@ const app = express()
 app.use(express.json())
 app.use(cors())
 
-app.post("/checkout/create", getJWTCheck(), function (req, res) {
+app.post("/checkout/create", getJWTCheck(), (req: NowRequest, res: NowResponse) => {
   getStripeCustomerIdFromAuth0((req as AuthenticatedRequest).user.sub)
     .then(async customerId => {
       const checkoutSession = await getStripe().checkout.sessions.create({
@@ -35,7 +38,7 @@ app.post("/checkout/create", getJWTCheck(), function (req, res) {
     .catch(e => console.log(e))
 })
 
-app.post("/portal/create", getJWTCheck(), function (req, res) {
+app.post("/portal/create", getJWTCheck(), (req: NowRequest, res: NowResponse) => {
   getStripeCustomerIdFromAuth0((req as AuthenticatedRequest).user.sub)
     .then(async customerId => {
       console.log(`Found customer id ${customerId}`)
@@ -48,7 +51,7 @@ app.post("/portal/create", getJWTCheck(), function (req, res) {
     .catch(e => console.log(e))
 })
 
-app.get("/admin/test", getJWTCheck(), checkRoles(["admin"]), function (req, res) {
+app.get("/admin/test", getJWTCheck(), checkRoles(["admin"]), (req: NowRequest, res: NowResponse) => {
   res.json({
     user: 1,
   })
