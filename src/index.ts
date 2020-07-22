@@ -3,7 +3,7 @@ import cors from "cors"
 import { AuthenticatedRequest } from "./types"
 
 import { getStripe } from "./utils/stripe"
-import { jwtCheck } from "./utils/auth"
+import { getJWTCheck, checkRoles } from "./utils/auth"
 import { getStripeCustomerIdFromAuth0 } from "./utils/auth0"
 
 import * as dotenv from "dotenv"
@@ -14,7 +14,7 @@ const app = express()
 app.use(express.json())
 app.use(cors())
 
-app.post("/checkout/create", jwtCheck, function (req, res) {
+app.post("/checkout/create", getJWTCheck(), function (req, res) {
   getStripeCustomerIdFromAuth0((req as AuthenticatedRequest).user.sub)
     .then(async customerId => {
       const checkoutSession = await getStripe().checkout.sessions.create({
@@ -35,7 +35,7 @@ app.post("/checkout/create", jwtCheck, function (req, res) {
     .catch(e => console.log(e))
 })
 
-app.post("/portal/create", jwtCheck, function (req, res) {
+app.post("/portal/create", getJWTCheck(), function (req, res) {
   getStripeCustomerIdFromAuth0((req as AuthenticatedRequest).user.sub)
     .then(async customerId => {
       console.log(`Found customer id ${customerId}`)
@@ -46,6 +46,12 @@ app.post("/portal/create", jwtCheck, function (req, res) {
       res.json(portalSession)
     })
     .catch(e => console.log(e))
+})
+
+app.get("/admin/test", getJWTCheck(), checkRoles(["admin"]), function (req, res) {
+  res.json({
+    user: 1,
+  })
 })
 
 app.get("/", function (req, res) {
