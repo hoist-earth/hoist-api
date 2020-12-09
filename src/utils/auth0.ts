@@ -44,9 +44,8 @@ const getAuth0User = (sub: string) => {
 const getStripeCustomerIdFromAuth0 = (sub: string): Promise<string> => {
   return new Promise(function (resolve, reject) {
     getAuth0User(sub).then(async user => {
-      console.log((user as Auth0User).app_metadata.stripeCustomerId)
       // If StripeCustomerId is set already, return it
-      if ((user as Auth0User).app_metadata.stripeCustomerId) {
+      if ((user as Auth0User).app_metadata?.stripeCustomerId) {
         resolve((user as Auth0User).app_metadata.stripeCustomerId)
       } else {
         // Else create a new Stripe Customer
