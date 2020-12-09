@@ -2,5 +2,8 @@
 !.env.example
 node_modules
 .now
-#dist
 .vscode
+
+# I can't get the TS code to be built in Vercel, so I'm
+# pushing the locally built dist directory to github :/
+#dist
