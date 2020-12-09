@@ -1,0 +1,13 @@
+type User {
+  auth0UserId: String! @id
+  displayName: String
+  subscriptions: [Subscription]
+}
+
+type Subscription {
+  id: ID!
+  productId: String!
+  name: String!
+  startDate: Time!
+  expiryDate: Time!
+}
