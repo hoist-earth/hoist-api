@@ -31,7 +31,7 @@
   },
   "scripts": {
     "test": "jest",
-    "build": "tsc",
+    "build": "tsc --outDir dist",
     "dev": "./node_modules/typescript/bin/tsc && ts-node-dev --respawn --pretty --transpile-only src/index.ts",
     "lint": "eslint ./src --ext .ts",
     "lint-fix": "eslint ./src --fix --ext .ts"
